@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>All Queues</title>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+    </head>
+    <body>
+        <div class="container">
+            <h1>Registered Queues</h1>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Queue name</th>
+                        <th>Opening time</th>
+                        <th>Closing time</th>
+                        <th>Max slots per day</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for queue in queues %}
+                    <tr>
+                        <td>{{ queue.queue_name }}</td>
+                        <td>{{ queue.opening_time }}</td>
+                        <td>{{ queue.closing_time }}</td>
+                        <td>{{ queue.max_slots }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3">No queues registered yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <br /><br />
+            <a href="{{ url_for('new_queue') }}">Add a new queue</a>
+        </div>
+    </body>
+</html>
