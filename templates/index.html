@@ -1,124 +1,134 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sequence Number</title>
-    <style>
-        /* Global Styles */
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f7f9fc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            flex-direction: column;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Sequence Number</title>
+        <style>
+            /* Global Styles */
+            body {
+                font-family: "Arial", sans-serif;
+                background-color: #f7f9fc;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                flex-direction: column;
+            }
 
-        /* Container Style */
-        .container {
-            text-align: center;
-            background-color: #fff;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            border-radius: 8px;
-            width: 300px;
-        }
+            /* Container Style */
+            .container {
+                text-align: center;
+                background-color: #fff;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                padding: 30px;
+                border-radius: 8px;
+                width: 300px;
+            }
 
-        /* Heading Style */
-        h1 {
-            color: #333;
-            font-size: 2rem;
-            margin-bottom: 20px;
-        }
+            /* Heading Style */
+            h1 {
+                color: #333;
+                font-size: 2rem;
+                margin-bottom: 20px;
+            }
 
-        /* Sequence Number Display */
-        .sequence-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 20px;
-            background-color: #e7f5ff;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.1);
-        }
+            /* Sequence Number Display */
+            .sequence-number {
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: #007bff;
+                margin-bottom: 20px;
+                background-color: #e7f5ff;
+                padding: 15px;
+                border-radius: 5px;
+                box-shadow: 0 4px 6px rgba(0, 123, 255, 0.1);
+            }
 
-        /* Button Styles */
-        .btn {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-top: 20px;
-        }
+            /* Button Styles */
+            .btn {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                padding: 12px 25px;
+                font-size: 1rem;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+                margin-top: 20px;
+            }
 
-        .btn:hover {
-            background-color: #0056b3;
-        }
+            .btn:hover {
+                background-color: #0056b3;
+            }
 
-        /* Error Message */
-        .error {
-            color: red;
-            font-size: 1rem;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="container">
-        <h1>Your Sequence Number</h1>
-        <div id="sequence-number" class="sequence-number">
-            Loading...
+            /* Error Message */
+            .error {
+                color: red;
+                font-size: 1rem;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Your Sequence Number</h1>
+            <div id="sequence-number" class="sequence-number">Loading...</div>
+            <button class="btn" onclick="deleteCookie()">
+                Release queue position
+            </button>
+            <div id="error-message" class="error"></div>
         </div>
-        <button class="btn" onclick="deleteCookie()">Delete Cookie</button>
-        <div id="error-message" class="error"></div>
-    </div>
 
-    <script>
-        // Fetch the sequence number from the Flask API
-        async function fetchSequenceNumber() {
-            try {
-                const response = await fetch('/get_sequence_number');
-                const data = await response.json();
-                if (data.sequence_number) {
-                    document.getElementById('sequence-number').textContent = data.sequence_number;
-                    document.getElementById('error-message').textContent = '';
-                } else {
-                    document.getElementById('sequence-number').textContent = 'Error fetching sequence number';
-                    document.getElementById('error-message').textContent = 'There was an issue with your request. Please try again.';
+        <script>
+            // Fetch the sequence number from the Flask API
+            async function fetchSequenceNumber() {
+                try {
+                    const response = await fetch(
+                        "/get_sequence_number?uuid={{queue_uuid}}",
+                    );
+                    const data = await response.json();
+                    if (data.sequence_number) {
+                        document.getElementById("sequence-number").textContent =
+                            data.sequence_number;
+                        document.getElementById("error-message").textContent =
+                            "";
+                    } else {
+                        document.getElementById("sequence-number").textContent =
+                            "Error fetching sequence number";
+                        document.getElementById("error-message").textContent =
+                            "There was an issue with your request. Please try again.";
+                    }
+                } catch (error) {
+                    document.getElementById("sequence-number").textContent =
+                        "Error";
+                    document.getElementById("error-message").textContent =
+                        "Failed to connect to server. Please check your network.";
                 }
-            } catch (error) {
-                document.getElementById('sequence-number').textContent = 'Error';
-                document.getElementById('error-message').textContent = 'Failed to connect to server. Please check your network.';
             }
-        }
 
-        // Function to delete the cookie
-        async function deleteCookie() {
-            try {
-                const response = await fetch('/delete_cookie');
-                const data = await response.json();
-                if (data.message) {
-                    document.getElementById('sequence-number').textContent = 'Cookie Deleted. Refresh to get a new sequence number.';
-                    document.getElementById('error-message').textContent = '';
+            // Function to delete the cookie
+            async function deleteCookie() {
+                try {
+                    const response = await fetch(
+                        "/delete_cookie?uuid={{queue_uuid}}",
+                    );
+                    const data = await response.json();
+                    if (data.message) {
+                        document.getElementById("sequence-number").textContent =
+                            "Queue position released. Refresh to get a new sequence number.";
+                        document.getElementById("error-message").textContent =
+                            "";
+                    }
+                } catch (error) {
+                    document.getElementById("error-message").textContent =
+                        "Failed to release queue position.";
                 }
-            } catch (error) {
-                document.getElementById('error-message').textContent = 'Failed to delete the cookie.';
             }
-        }
 
-        // Call the function to fetch the sequence number on page load
-        fetchSequenceNumber();
-    </script>
-
-</body>
+            // Call the function to fetch the sequence number on page load
+            fetchSequenceNumber();
+        </script>
+    </body>
 </html>
