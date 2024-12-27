@@ -1,4 +1,4 @@
-from flask import Flask, request,redirect, make_response, jsonify, render_template, url_for, abort
+from flask import Flask, request, render_template
 import os
 import json
 
@@ -30,12 +30,14 @@ def show_queues():
 
 @app.route('/new_queue_form_submit', methods=['POST'])
 def new_queue_form_submit():
-    return register_queue.submit()
+    print("submitting")
+    return register_queue.submit(request)
 
 @app.route('/queue')
 def current_queue():
     queue_uuid = extract_and_validate_uuid(request)
-    return render_template('current_queue.html', queue_uuid=str(queue_uuid))
+    queue = queue_position.try_load_queue(queue_uuid)
+    return render_template('current_queue.html', queue_uuid=str(queue_uuid), queue_name = queue.name)
 
 if __name__ == '__main__':
     os.makedirs(QUEUE_DIR, exist_ok=True)

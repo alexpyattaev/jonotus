@@ -1,9 +1,10 @@
-from flask import Flask, request,redirect, make_response, jsonify, render_template, url_for, abort
+from flask import request, make_response, jsonify, abort
 import os
 import json
 import jwt
 
 from config import JWT_SECRET_KEY, JWT_ALGORITHM, QUEUE_DIR, SEQUENCE_NUMBERS_DIR
+from data_storage_classes import Queue
 from utils import extract_and_validate_uuid, get_user_id
 
 # Much crutches
@@ -23,7 +24,7 @@ def decode_jwt(token):
         return None
 
 # Utility function to validate a queue UUID
-def try_load_queue(queue_uuid):
+def try_load_queue(queue_uuid)->Queue:
     """
     Load the content of a queue by its UUID.
 
@@ -46,15 +47,14 @@ def try_load_queue(queue_uuid):
 
     try:
         with open(queue_file, 'r') as f:
-            queue_content = json.load(f)
-        return queue_content
+            return Queue.from_json(f.read())
     except json.JSONDecodeError:
         abort(500, description=f"Queue file {queue_uuid} contains invalid JSON.")
     except Exception as e:
         abort(500, description=f"Unexpected error while loading queue: {e}")
 
 # Utility function to get the next sequence number for a queue
-def get_next_sequence_number(queue_uuid):
+def get_next_sequence_number(queue_uuid)->int:
     sequence_file = os.path.join(SEQUENCE_NUMBERS_DIR, f"{queue_uuid}")
 
     # If the sequence file does not exist, initialize it to 1
@@ -95,7 +95,7 @@ def get_sequence_number():
     queue_uuid =  extract_and_validate_uuid(request)
 
     # Check if the queue exists
-    _ = try_load_queue(queue_uuid)
+    queue = try_load_queue(queue_uuid)
 
     # Get user ID (hashed based on client information)
     user_id = request.cookies.get('user_id')
@@ -108,9 +108,11 @@ def get_sequence_number():
     else:
         decoded_jwt = None
     if decoded_jwt:
-        sequence_number = decoded_jwt["sequence_number"]
+        sequence_number = int(decoded_jwt["sequence_number"])
     else:
         sequence_number = get_next_sequence_number(queue_uuid)
+    if queue.max_slots > 0 and sequence_number > queue.max_slots:
+        abort(400, "Out of slots for today!")
 
     # Generate a JWT with the queue UUID and position
     jwt_data = {

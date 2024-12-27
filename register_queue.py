@@ -1,13 +1,14 @@
 from io import BytesIO
-from flask import Flask, render_template, Response, request, abort, jsonify, redirect, url_for
-import json
-import qrcode
+from flask import  render_template, Response, request, jsonify, redirect, url_for
 import re
 import os
 import uuid
+import datetime
+import qrcode
 
 from utils import extract_and_validate_uuid
 from config import QUEUE_DIR
+from data_storage_classes import Queue
 
 # Much crutches
 from __main__ import app
@@ -18,7 +19,6 @@ def qrcode_url(host, queue_uuid):
 @app.route('/qr_code')
 def qr_code_maker():
     queue_uuid = extract_and_validate_uuid(request)
-    print(queue_uuid)
     # Generate a QR code
     qr = qrcode.QRCode(
         version=1,  # controls the size of the QR code
@@ -44,10 +44,31 @@ def show_queue_code():
     url = qrcode_url(request, queue_uuid)
     return render_template('show_queue_code.html',queue_uuid= queue_uuid, url=url)
 
-# Regex pattern for HH:MM validation
-time_pattern = re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
 
-def submit():
+def parse_time(time_str)->datetime.time:
+    # Regex pattern to match the HH:MM format
+    pattern = r"^(\d{2}):(\d{2})$"
+    try:
+        # Try to match the pattern
+        match = re.match(pattern, time_str)
+        assert match is not None
+        # Extract the hours and minutes and convert them to integers
+        hours = int(match.group(1))
+        minutes = int(match.group(2))
+        return datetime.time(hours,minutes)
+    except:
+        raise ValueError(f"Invalid time for HH:MM format: {time_str}")
+
+def validate_str(s, name, max_len:int=512)->list[str]:
+    errors = []
+    if s is None or not s.strip():
+        errors.append(f"{name} is required and cannot be empty.")
+    elif len(s) > 512:
+        errors.append(f"{name} too long, please use less characters")
+    return errors
+
+
+def submit(request):
     # Get form data
     queue_name = request.form.get('queue_name')
     opening_time = request.form.get('opening_time')
@@ -55,49 +76,41 @@ def submit():
     max_slots = request.form.get('max_slots')
     # Validation
     errors = []
+    errors.extend(validate_str (queue_name, "Queue name"))
 
-    if queue_name is None or not queue_name.strip():
-        errors.append("Queue name is required and cannot be empty.")
-    elif len(queue_name) > 512:
-        return 400
-
-    # Validate opening_time
-    if not opening_time or not time_pattern.match(opening_time):
+    try:
+        opening_time = parse_time(opening_time)
+    except Exception:
         errors.append("Opening time is required and must be in HH:MM format.")
 
-    # Validate closing_time
-    if not closing_time or not time_pattern.match(closing_time):
+    try:
+        closing_time = parse_time(closing_time)
+    except Exception:
         errors.append("Closing time is required and must be in HH:MM format.")
 
-    # Ensure opening_time is before closing_time
-    if opening_time and closing_time:
-        if opening_time >= closing_time:
-            errors.append("Opening time must be earlier than closing time.")
+    if opening_time >= closing_time:
+        errors.append("Opening time must be earlier than closing time.")
 
-    # Validate max_slots
-    if max_slots:
-        try:
-            max_slots = int(max_slots)
-            if max_slots <= 0:
-                errors.append("Max slots must be a positive integer.")
-        except ValueError:
-            errors.append("Max slots must be an integer.")
-    else:
-        max_slots = 10000  # Default value if not provided
+    try:
+        max_slots = int(max_slots)
+        assert( max_slots >= 0)
+    except ValueError:
+        errors.append("Max slots must be a non-negative integer.")
+
     if errors:
         return jsonify({'success': False, 'errors': errors}), 400
+
     # Store the submitted data
-    queue_data = {
-        'queue_name': queue_name,
-        'opening_time': opening_time,
-        'closing_time': closing_time,
-        'max_slots': max_slots
-    }
+
+    queue = Queue(
+        name= queue_name,
+        opening_time= opening_time,
+        closing_time= closing_time,
+        max_slots =max_slots)
     # Generate a new UUID for the queue and save as a JSON file
     queue_id = str(uuid.uuid4())
     queue_file = os.path.join(QUEUE_DIR, f"{queue_id}.json")
     with open(queue_file, 'w') as f:
-        json.dump(queue_data, f)
-    #return jsonify({'success': True, 'message': 'Queue submitted successfully.'}), 200
-    # Redirect to a page that shows all queues (optional)
-    return redirect(url_for('current_queue') + f"?uuid={queue_id}")
+        f.write(queue.as_json())
+
+    return redirect(url_for('show_queue_code') + f"?uuid={queue_id}")

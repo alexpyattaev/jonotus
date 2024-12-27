@@ -73,7 +73,7 @@
     </head>
     <body>
         <div class="container">
-            <h1>Your Sequence Number</h1>
+            <h1>You are in queue {{ queue_name }}</h1>
             <div id="sequence-number" class="sequence-number">Loading...</div>
             <button class="btn" onclick="deleteCookie()">
                 Release queue position
@@ -91,7 +91,7 @@
                     const data = await response.json();
                     if (data.sequence_number) {
                         document.getElementById("sequence-number").textContent =
-                            data.sequence_number;
+                            "Your number: " + data.sequence_number;
                         document.getElementById("error-message").textContent =
                             "";
                     } else {

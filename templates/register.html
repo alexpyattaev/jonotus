@@ -26,6 +26,7 @@
                     type="time"
                     id="opening_time"
                     name="opening_time"
+                    value="08:00"
                     required
                 /><br /><br />
 
@@ -34,15 +35,19 @@
                     type="time"
                     id="closing_time"
                     name="closing_time"
+                    value="17:30"
                     required
                 /><br /><br />
 
-                <label for="max_slots">Maximum Queue Slots per Day:</label>
+                <label for="max_slots"
+                    >Maximum Queue Slots per Day (0 for unlimited):</label
+                >
                 <input
                     type="number"
                     id="max_slots"
                     name="max_slots"
-                    min="1"
+                    value="0"
+                    min="0"
                     required
                 /><br /><br />
 
