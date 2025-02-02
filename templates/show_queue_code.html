@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Queue</title>
+    </head>
+    <body>
+        <div style="justify-content: center">
+            <h1>QR Code for your Queue is</h1>
+            <p>
+                This QR code contains a link to
+                <a href="{{url}}">{{url}}</a>.
+            </p>
+            <img src="/qr_code?uuid={{ queue_uuid }}" alt="{{url}}" />
+        </div>
+    </body>
+</html>
