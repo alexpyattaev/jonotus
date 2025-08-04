@@ -15,10 +15,10 @@ def new_queue():
     return render_template('register.html')
 
 
-# Route to display all the queues
+
 @app.route('/queues')
 def show_queues():
-    # List all JSON files in the queues directory
+    
     queues = []
     for filename in os.listdir(QUEUE_DIR):
         if filename.endswith('.json'):
