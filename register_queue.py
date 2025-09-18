@@ -1,5 +1,5 @@
 from io import BytesIO
-from flask import  render_template, Response, request, jsonify, redirect, url_for
+from flask import Blueprint, render_template, Response, request, jsonify, redirect, url_for
 import re
 import os
 import uuid
@@ -10,13 +10,12 @@ from utils import extract_and_validate_uuid
 from config import QUEUE_DIR
 from data_storage_classes import Queue
 
-# Much crutches
-from __main__ import app
+bp = Blueprint('register', __name__)
 
 def qrcode_url(host, queue_uuid):
     return f"{request.scheme}://{request.host}/queue?uuid={queue_uuid}"
 
-@app.route('/qr_code')
+@bp.route('/qr_code')
 def qr_code_maker():
     queue_uuid = extract_and_validate_uuid(request)
     # Generate a QR code
@@ -38,7 +37,7 @@ def qr_code_maker():
     # Return the image as a response to display it on the web page
     return Response(img_io, mimetype='image/png')
 
-@app.route('/show_queue_code')
+@bp.route('/show_queue_code')
 def show_queue_code():
     queue_uuid = extract_and_validate_uuid(request)
     url = qrcode_url(request, queue_uuid)

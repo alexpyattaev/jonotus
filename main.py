@@ -4,11 +4,14 @@ import json
 
 app = Flask(__name__)
 
-import register_queue
-import queue_position
+from register_queue import bp as register_bp, submit
+from queue_position import bp as queue_bp, try_load_queue
 from utils import extract_and_validate_uuid
 
 from config import QUEUE_DIR, SEQUENCE_NUMBERS_DIR
+
+app.register_blueprint(register_bp)
+app.register_blueprint(queue_bp)
 
 @app.route('/')
 def new_queue():
@@ -31,12 +34,12 @@ def show_queues():
 @app.route('/new_queue_form_submit', methods=['POST'])
 def new_queue_form_submit():
     print("submitting")
-    return register_queue.submit(request)
+    return submit(request)
 
 @app.route('/queue')
 def current_queue():
     queue_uuid = extract_and_validate_uuid(request)
-    queue = queue_position.try_load_queue(queue_uuid)
+    queue = try_load_queue(queue_uuid)
     return render_template('current_queue.html', queue_uuid=str(queue_uuid), queue_name = queue.name)
 
 if __name__ == '__main__':

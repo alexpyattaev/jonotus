@@ -1,4 +1,4 @@
-from flask import request, make_response, jsonify, abort
+from flask import Blueprint, request, make_response, jsonify, abort
 import os
 import json
 import jwt
@@ -7,8 +7,7 @@ from config import JWT_SECRET_KEY, JWT_ALGORITHM, QUEUE_DIR, SEQUENCE_NUMBERS_DI
 from data_storage_classes import Queue
 from utils import extract_and_validate_uuid, get_user_id
 
-# Much crutches
-from __main__ import app
+bp = Blueprint('queue', __name__)
 
 # Utility to generate a JWT
 def generate_jwt(data):
@@ -73,7 +72,7 @@ def get_next_sequence_number(queue_uuid)->int:
 
     return next_sequence
 
-@app.route('/delete_cookie')
+@bp.route('/delete_cookie')
 def delete_cookie():
     queue_uuid = request.args.get('uuid')
     if not queue_uuid or len(queue_uuid) > 512:
@@ -89,7 +88,7 @@ def delete_cookie():
 
     return response
 
-@app.route('/get_sequence_number')
+@bp.route('/get_sequence_number')
 def get_sequence_number():
     # Get queue UUID from query parameter
     queue_uuid =  extract_and_validate_uuid(request)

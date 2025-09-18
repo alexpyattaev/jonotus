@@ -1,0 +1,12 @@
+# Ignore unnecessary files in Docker context
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+*.log
+queues/
+sequence_numbers/
