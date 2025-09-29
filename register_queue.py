@@ -18,9 +18,9 @@ def qrcode_url(host, queue_uuid):
 @bp.route('/qr_code')
 def qr_code_maker():
     queue_uuid = extract_and_validate_uuid(request)
-    # Generate a QR code
+    
     qr = qrcode.QRCode(
-        version=1,  # controls the size of the QR code
+        version=1,  
         error_correction=qrcode.ERROR_CORRECT_L,
         box_size=10,
         border=4,
@@ -28,13 +28,13 @@ def qr_code_maker():
     qr.add_data(qrcode_url (request.host, queue_uuid))
     qr.make(fit=True)
 
-    # Convert QR code to an image and save it in memory (in a byte buffer)
+   
     img = qr.make_image(fill='black', back_color='white')
     img_io = BytesIO()
     img.save(img_io, 'PNG')
     img_io.seek(0)
 
-    # Return the image as a response to display it on the web page
+   
     return Response(img_io, mimetype='image/png')
 
 @bp.route('/show_queue_code')
@@ -45,13 +45,13 @@ def show_queue_code():
 
 
 def parse_time(time_str)->datetime.time:
-    # Regex pattern to match the HH:MM format
+   
     pattern = r"^(\d{2}):(\d{2})$"
     try:
-        # Try to match the pattern
+        
         match = re.match(pattern, time_str)
         assert match is not None
-        # Extract the hours and minutes and convert them to integers
+       
         hours = int(match.group(1))
         minutes = int(match.group(2))
         return datetime.time(hours,minutes)
@@ -68,12 +68,12 @@ def validate_str(s, name, max_len:int=512)->list[str]:
 
 
 def submit(request):
-    # Get form data
+    
     queue_name = request.form.get('queue_name')
     opening_time = request.form.get('opening_time')
     closing_time = request.form.get('closing_time')
     max_slots = request.form.get('max_slots')
-    # Validation
+   
     errors = []
     errors.extend(validate_str (queue_name, "Queue name"))
 
@@ -99,17 +99,17 @@ def submit(request):
     if errors:
         return jsonify({'success': False, 'errors': errors}), 400
 
-    # Store the submitted data
+    
 
     queue = Queue(
         name= queue_name,
         opening_time= opening_time,
         closing_time= closing_time,
         max_slots =max_slots)
-    # Generate a new UUID for the queue and save as a JSON file
+    
     queue_id = str(uuid.uuid4())
     queue_file = os.path.join(QUEUE_DIR, f"{queue_id}.json")
     with open(queue_file, 'w') as f:
         f.write(queue.as_json())
 
-    return redirect(url_for('show_queue_code') + f"?uuid={queue_id}")
+    return redirect(url_for('register.show_queue_code') + f"?uuid={queue_id}")
