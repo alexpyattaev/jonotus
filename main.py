@@ -45,4 +45,6 @@ def current_queue():
 if __name__ == '__main__':
     os.makedirs(QUEUE_DIR, exist_ok=True)
     os.makedirs(SEQUENCE_NUMBERS_DIR, exist_ok=True)
-    app.run(debug=True)
+    # Enable debug mode and allow external access
+    app.debug = True
+    app.run(host='0.0.0.0', port=8080, threaded=True)

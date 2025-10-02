@@ -5,15 +5,18 @@ import os
 import uuid
 import datetime
 import qrcode
-
+from queue_manager import QueueManager
 from utils import extract_and_validate_uuid
 from config import QUEUE_DIR
 from data_storage_classes import Queue
 
 bp = Blueprint('register', __name__)
 
+# Initialize queue manager
+queue_manager = QueueManager()
+
 def qrcode_url(host, queue_uuid):
-    return f"{request.scheme}://{request.host}/queue?uuid={queue_uuid}"
+    return f"http://{host}/queue?uuid={queue_uuid}"
 
 @bp.route('/qr_code')
 def qr_code_maker():
@@ -40,7 +43,9 @@ def qr_code_maker():
 @bp.route('/show_queue_code')
 def show_queue_code():
     queue_uuid = extract_and_validate_uuid(request)
-    url = qrcode_url(request, queue_uuid)
+    # Track queue access
+    queue_manager.track_access(str(queue_uuid))
+    url = qrcode_url(request.host, queue_uuid)
     return render_template('show_queue_code.html',queue_uuid= queue_uuid, url=url)
 
 
@@ -68,6 +73,8 @@ def validate_str(s, name, max_len:int=512)->list[str]:
 
 
 def submit(request):
+    # Check and cleanup queues if needed
+    queue_manager.cleanup_if_needed()
     
     queue_name = request.form.get('queue_name')
     opening_time = request.form.get('opening_time')
@@ -111,5 +118,8 @@ def submit(request):
     queue_file = os.path.join(QUEUE_DIR, f"{queue_id}.json")
     with open(queue_file, 'w') as f:
         f.write(queue.as_json())
+    
+    # Track initial queue access
+    queue_manager.track_access(queue_id)
 
     return redirect(url_for('register.show_queue_code') + f"?uuid={queue_id}")
