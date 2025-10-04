@@ -95,10 +95,29 @@ The project uses Flask blueprints for modularity:
 - `register_bp`: Handles queue registration
 - `queue_bp`: Manages queue positions
 
+## Queue Management
+
+The system includes automatic queue management features:
+- Maximum 1 million queues by default (configurable)
+- Automatic cleanup of least accessed queues when limit is exceeded
+- Usage tracking with access count and timestamp
+- JSON-based storage for queue usage data
+
+### Testing
+```bash
+pytest tests/test_queue_cleanup.py -v
+```
+
+Tests verify:
+- Queue limit enforcement
+- Automatic cleanup of least used queues
+- Usage tracking accuracy
+
 ## Data Storage
 
 - Queue data is stored in JSON format in the `queues` directory
 - Sequence numbers are maintained in the `sequence_numbers` directory
+- Queue usage data stored in `queues/_queue_usage.json`
 
 ## Security
 
